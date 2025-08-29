@@ -1,0 +1,179 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Learn.AI - Model MS",
+        "description": "This is the Model microservice for Learn.AI, an AI powered Ed-Tech platform. This microservice is the hub for the AI models for our platform and help in question and answer generation, keyword extraction, user score calcualtion and other aspects which we will target later on.",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "email": "devashish20csu033@ncuindia.edu"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "",
+            "description": "Production server"
+        },
+        {
+            "url": "http:localhost:3000/api/ldai-model/v1",
+            "description": "Local server"
+        }
+    ],
+    "paths": {
+        "/qna/generate": {
+            "post": {
+                "tags": ["QnA"],
+                "summary": "Generate a quiz",
+                "description": "Utilize the AI model to generate a quiz based on a give chapter from a subject. The pdf file link is provided from which the model will extract the questions and answers. Along with that, the benchmark keywords are also extracted which can be used later to evaluate the quiz.",
+                "operationId": "generateQuiz",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GenerateQuizRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Quiz generated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "quiz": {
+                                            "type": "object",
+                                            "description": "The generated quiz."
+                                        },
+                                        "benchmarkKeywords": {
+                                            "type": "array",
+                                            "description": "The benchmark keywords extracted from the pdf."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input."
+                    },
+                    "500": {
+                        "description": "Internal server error."
+                    }
+                }
+            }
+        },
+        
+        "/calc/score": {
+            "post": {
+                "tags": ["Calculation"],
+                "summary": "User score calculation",
+                "description": "Calculate the score of the user based on the user's answer, keywords and the benchmark answer and keywords. These values are then fed into our AI model which calculates the scores, mainly, the answer similarity score and the keyword similarity score. The final score is calculated based on these two scores. The user's score is then returned to be stored in the database. This endpoint works in conjunction with the SSE endpoint, which is used to update the user's score in real-time.",
+                "operationId": "CalculateScore",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ScoreCalculationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Score calculated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ScoreCalculationResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input."
+                    },
+                    "500": {
+                        "description": "Internal server error."
+                    }
+                }
+            
+            }
+        },
+
+        "/calc/stream": {
+            "get": {
+                "tags": ["Calculation"],
+                "summary": "Calcualtion stream",
+                "description": "This endpoint is a Server-sent Event (SSE) endpoint, which the clients, i.e., other services can hook into to get the user's calculated score in real-time. This is built mainly to reduce the latency in updating the user's score in the database and to provide a real-time experience to the user, by updating the score in the background and letting the user proceed with the quiz in a smooth manner.",
+                "operationId": "UpdateScore",
+                "responses": {
+                    "200": {
+                        "description": "Score updated successfully."
+                    },
+                    "500": {
+                        "description": "Internal server error."
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "GenerateQuizRequest": {
+                "type": "object",
+                "properties": {
+                    "pdfLink": {
+                        "type": "string",
+                        "description": "The link to the pdf file from which the questions and answers are to be extracted."
+                    }
+                }
+            },
+            "ScoreCalculationRequest": {
+                "type": "object",
+                "properties": {
+                    "userAns": {
+                        "type": "string",
+                        "description": "The answers provided by the user."
+                    },
+                    "benchAns": {
+                        "type": "string",
+                        "description": "The benchmark answers extracted from the pdf."
+                    },
+                    "bencKeys": {
+                        "type": "array",
+                        "description": "The benchmark keywords extracted from answer.",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "ScoreCalculationResponse": {
+                "type": "object",
+                "properties": {
+                    "score": {
+                        "type": "number",
+                        "description": "The score of the user."
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "QnA",
+            "description": "Operations related to our quizzes available on our platform."
+        },
+        {
+            "name": "Calculation",
+            "description": "Operations related to the calculation of user scores and other metrics."
+        }
+    ]
+}
